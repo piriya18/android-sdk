@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/mylibrary.iml" filepath="$PROJECT_DIR$/mylibrary.iml" group="wso2-android-oidc/mylibrary" />
+      <module fileurl="file://$PROJECT_DIR$/../wso2-android-oidc.iml" filepath="$PROJECT_DIR$/../wso2-android-oidc.iml" group="wso2-android-oidc" />
+    </modules>
+  </component>
+</project>
