@@ -6,29 +6,20 @@ import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
 
-import androidx.annotation.MainThread;
-import androidx.annotation.Nullable;
+
 import androidx.browser.customtabs.CustomTabsIntent;
 
-import net.openid.appauth.AuthorizationException;
 import net.openid.appauth.AuthorizationRequest;
 import net.openid.appauth.AuthorizationResponse;
 import net.openid.appauth.AuthorizationService;
 import net.openid.appauth.AuthorizationServiceConfiguration;
-import net.openid.appauth.ClientAuthentication;
-import net.openid.appauth.ClientSecretBasic;
 import net.openid.appauth.ResponseTypeValues;
-import net.openid.appauth.TokenResponse;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 
-public class LoginRequest {
+
+public class LoginService {
 
     private final AtomicReference<CustomTabsIntent> customTabIntent = new AtomicReference<>();
 

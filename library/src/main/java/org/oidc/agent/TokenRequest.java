@@ -8,15 +8,7 @@ import androidx.annotation.Nullable;
 import net.openid.appauth.AuthorizationException;
 import net.openid.appauth.AuthorizationResponse;
 import net.openid.appauth.AuthorizationService;
-import net.openid.appauth.ClientAuthentication;
-import net.openid.appauth.ClientSecretBasic;
-import net.openid.appauth.NoClientAuthentication;
 import net.openid.appauth.TokenResponse;
-
-import org.json.JSONObject;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class TokenRequest extends AsyncTask<Void, Void, OAuth2TokenResponse> {
 
@@ -55,10 +47,6 @@ public class TokenRequest extends AsyncTask<Void, Void, OAuth2TokenResponse> {
         return oAuth2TokenResponse;
     }
 
-//    @Override
-//    protected void onPostExecute(OAuth2TokenResponse response) {
-//        callback.onTokenRequestCompleted(response);
-//    }
 
     public interface TokenRespCallback {
 
