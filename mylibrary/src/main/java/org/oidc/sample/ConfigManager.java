@@ -1,4 +1,4 @@
-package com.example.mylibrary;
+package org.oidc.sample;
 
 import android.content.Context;
 import android.content.res.Resources;
