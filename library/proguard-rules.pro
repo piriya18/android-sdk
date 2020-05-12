@@ -16,7 +16,7 @@
 # debugging stack traces.
 #-keepattributes SourceFile,LineNumberTable
 
--keep class org.oidc.sample.** {*; }
+-keep class org.oidc.agent.** {*; }
 
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
