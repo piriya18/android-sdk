@@ -1,7 +1,7 @@
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
-version '0.5.2.91' // your library version
+version '0.5.4' // your library version
 group 'com.sample.android' // whatever group name you'd like
 
 publishing {
@@ -30,27 +30,3 @@ publishing {
         }
     }
 }
-
-//bintray {
-////    user = project.hasProperty('user') ?: System.getenv('BINTRAY_USER')
-////    key = project.hasProperty('apiKey') ?: System.getenv('BINTRAY_API_KEY')
-//    user = 'piraveena'
-//    key = 'e70e8ae36fa6923b11333546a5b265068eccc3d3'
-//    publications = ['Production']
-//    configurations = ['archives']
-//    // Default: false. Whether to run this as dry-run, without deploying
-//    dryRun = false
-//    // Default: false. Whether to override version artifacts already published
-//    override = false
-//    // Default: false. Whether version should be auto published after an upload
-//    publish = true
-//    pkg {
-//        repo = 'oidc-android' // the name of the repository you created on Bintray
-//        name = 'oidc' // the name of the package you created inside it
-//        version {
-//            name = this.version
-//            released = new Date()
-//            vcsTag = this.version
-//        }
-//    }
-//}
