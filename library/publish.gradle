@@ -1,22 +1,20 @@
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
-version '0.5.4' // your library version
+version '0.5.5' // your library version
 group 'com.sample.android' // whatever group name you'd like
 
 publishing {
     publications {
         Production(MavenPublication) {
-            artifact("/Users/piraveena/Documents/SDK/android/mylibrary/build/outputs/aar/mylibrary-release.aar") // replace with your library name
+//            artifact("/Users/piraveena/Documents/SDK/android/mylibrary/build/outputs/aar/mylibrary-release.aar") // replace with your library name
+            artifact("$buildDir/outputs/aar/library-release.aar")
             groupId this.group
             artifactId 'oidc.sample.lib' // replace with your library artifact id
             version this.version
 
             pom.withXml {
                 def dependenciesNode = asNode().appendNode('dependencies')
-
-                // Iterate over the implementation dependencies (we don't want the test ones),
-                // adding a <dependency> node for each
                 configurations.implementation.allDependencies.each {
                     // Ensure dependencies such as fileTree are not included in the pom.
                     if (it.name != 'unspecified') {
