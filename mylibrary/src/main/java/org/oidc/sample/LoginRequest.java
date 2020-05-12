@@ -35,6 +35,7 @@ public class LoginRequest {
     private ConfigManager configManager;
     private OAuth2TokenResponse oAuth2TokenResponse;
     private AuthorizationService authorizationService;
+    private String idToken;
 
 
     public void doAuthorization(Context context, ConfigManager configManager, PendingIntent completionIntent, PendingIntent cancelIntent) {
@@ -58,57 +59,16 @@ public class LoginRequest {
         authorizationService.performAuthorizationRequest(request, completionIntent, cancelIntent, customTabIntent.get());
     }
 
-    @MainThread
-    public void handleAuthorization(Intent intent) throws InterruptedException {
+    public void handleAuthorization(Intent intent, TokenRequest.TokenRespCallback callback) throws InterruptedException {
 
         String clientSecret = configManager.getClientSecret();
         AuthorizationResponse response = AuthorizationResponse.fromIntent(intent);
-        Map<String, String> additionalParameters = new HashMap<>();
-        additionalParameters.put("client_secret", clientSecret);
-
-        ClientAuthentication clientAuthentication = new ClientSecretBasic(clientSecret);
         oAuth2TokenResponse = new OAuth2TokenResponse();
-
-        Log.i("Tokenqqqq", "before callback");
-
-        Semaphore semaphore = new Semaphore(0, true);
-
-        authorizationService.performTokenRequest(response.createTokenExchangeRequest(additionalParameters),
-                clientAuthentication,  new AuthorizationService.TokenResponseCallback() {
-                    @Override
-                    public void onTokenRequestCompleted(@Nullable TokenResponse tokenResponse, @Nullable AuthorizationException exception) {
-                        Log.i("SEMAPHORE", "code1 " + semaphore.availablePermits());
-                        Log.i("Tokenqqqq", "inside callback");
-                        if (exception != null) {
-                            Log.i("LOG_TAG", "Token Exchange failed", exception);
-                        } else {
-                            Log.i("Tokenqqqq", "#####********$$");
-                            if (tokenResponse != null) {
-                                handleCodeExchangeResponse(tokenResponse);
-
-                                Log.i("LOG_TAG", String.format("Token Response [ Access Token: %s, ID Token: %s ]", tokenResponse.accessToken, tokenResponse.idToken));
-                            }
-                        }
-                        Log.i("SEMAPHORE", "code2 " + semaphore.availablePermits());
-                        semaphore.release();
-                    }
-                });
-        Log.i("SEMAPHORE", "code3 " + semaphore.availablePermits());
-        semaphore.acquire();
-        Log.i("Tokenqqqq", "after callback");
-        onDestroy();
+        new TokenRequest(authorizationService, response,clientSecret, callback).execute();
     }
 
-    private void handleCodeExchangeResponse(TokenResponse tokenResponse ) {
+    public void logout(Context context, String idToken) {
 
-        Log.i("Tokenqqqq", "inside callback");
-        oAuth2TokenResponse.setAccessToken(tokenResponse.accessToken);
-        oAuth2TokenResponse.setIdToken(tokenResponse.idToken);
-        Log.i("Token", oAuth2TokenResponse.getIdToken());
-
-    }
-
-    public void singleLogout(Context context, ConfigManager configManager, String idToken) {
         StringBuffer url = new StringBuffer();
         url.append(configManager.getLogoutEndpointUri());
         url.append("?id_token_hint=");
@@ -123,14 +83,8 @@ public class LoginRequest {
         customTabsIntent.launchUrl(context, Uri.parse(url.toString()));
     }
 
-    @MainThread
     public OAuth2TokenResponse getTokenResponse() {
         return oAuth2TokenResponse;
-    }
-
-    protected void onDestroy() {
-       authorizationService.dispose();
-       authorizationService = null;
     }
 
 }
