@@ -1,10 +1,9 @@
-package org.oidc.sample;
+package org.oidc.agent;
 
 import android.app.Activity;
 import android.os.Bundle;
 
 import net.openid.appauth.AuthorizationManagementActivity;
-import net.openid.appauth.RedirectUriReceiverActivity;
 
 public class RedirectActivity extends Activity {
 

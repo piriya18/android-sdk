@@ -1,4 +1,4 @@
-package org.oidc.sample;
+package org.oidc.agent;
 
 import android.content.Context;
 import android.content.res.Resources;

@@ -1,10 +1,9 @@
-package org.oidc.sample;
+package org.oidc.agent;
 
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.util.Log;
 
 
 import androidx.browser.customtabs.CustomTabsIntent;

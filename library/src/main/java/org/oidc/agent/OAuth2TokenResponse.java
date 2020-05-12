@@ -1,4 +1,4 @@
-package org.oidc.sample;
+package org.oidc.agent;
 
 public class OAuth2TokenResponse {
 

@@ -1,22 +1,20 @@
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
-version '0.1' // your library version
-group 'com.sample.android' // whatever group name you'd like
+version '0.1'
+group 'org.wso2.carbon.identity.sso'
 
 publishing {
     publications {
         Production(MavenPublication) {
-//            artifact("/Users/piraveena/Documents/SDK/android/mylibrary/build/outputs/aar/mylibrary-release.aar") // replace with your library name
             artifact("$buildDir/outputs/aar/library-release.aar")
             groupId this.group
-            artifactId 'oidc.sample.lib' // replace with your library artifact id
+            artifactId 'wso2is-oidc-sdk'
             version this.version
 
             pom.withXml {
                 def dependenciesNode = asNode().appendNode('dependencies')
                 configurations.implementation.allDependencies.each {
-                    // Ensure dependencies such as fileTree are not included in the pom.
                     if (it.name != 'unspecified') {
                         def dependencyNode = dependenciesNode.appendNode('dependency')
                         dependencyNode.appendNode('groupId', it.group)

@@ -1,4 +1,4 @@
-package org.oidc.sample;
+package org.oidc.agent;
 
 import android.os.AsyncTask;
 import android.util.Log;
