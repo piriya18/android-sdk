@@ -26,6 +26,8 @@ import android.util.Log;
 
 import androidx.browser.customtabs.CustomTabsIntent;
 
+import net.openid.appauth.AuthState;
+import net.openid.appauth.AuthorizationException;
 import net.openid.appauth.AuthorizationRequest;
 import net.openid.appauth.AuthorizationResponse;
 import net.openid.appauth.AuthorizationService;
@@ -44,45 +46,68 @@ public class LoginService {
     private OAuth2TokenResponse mOAuth2TokenResponse;
     private AuthorizationService mAuthorizationService;
     private static final String LOG_TAG = "LoginService";
+    private AuthState authState;
 
     public void doAuthorization(Context context, ConfigManager configManager,
             PendingIntent completionIntent, PendingIntent cancelIntent) {
 
         this.mConfigManager = configManager;
-        AuthorizationServiceConfiguration serviceConfiguration = new AuthorizationServiceConfiguration(
-                configManager.getAuthEndpointUri(), configManager.getTokenEndpointUri());
+        AuthorizationServiceConfiguration.fetchFromUrl
+                (configManager.getDiscoveryUri(),
+                        new AuthorizationServiceConfiguration.RetrieveConfigurationCallback() {
+                            @Override
+                            public void onFetchConfigurationCompleted(AuthorizationServiceConfiguration serviceConfiguration,AuthorizationException ex) {
+                                if (ex != null) {
+                                    Log.w(LOG_TAG, "Failed to retrieve configuration for ", ex);
+                                } else {
+                                    Log.d(LOG_TAG, "configuration retrieved for " + ", proceeding");
+                                    doAuthorize(serviceConfiguration, context, completionIntent, cancelIntent);
+
+                                }
+                            }
+                        }
+                );
+    }
+
+    private void doAuthorize( AuthorizationServiceConfiguration configuration, Context context,
+            PendingIntent completionIntent,
+            PendingIntent cancelIntent){
+
+        authState = new AuthState(configuration);
         AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(
-                serviceConfiguration, configManager.getClientId(), ResponseTypeValues.CODE,
-                configManager.getRedirectUri());
-        builder.setScopes(configManager.getScope());
+                configuration, mConfigManager.getClientId(),
+                ResponseTypeValues.CODE,
+                mConfigManager.getRedirectUri());
+        builder.setScopes(mConfigManager.getScope());
         AuthorizationRequest request = builder.build();
         mAuthorizationService = new AuthorizationService(context);
         CustomTabsIntent.Builder intentBuilder = mAuthorizationService
                 .createCustomTabsIntentBuilder(request.toUri());
         customTabIntent.set(intentBuilder.build());
-        mAuthorizationService.performAuthorizationRequest(request, completionIntent, cancelIntent,
-                customTabIntent.get());
-        Log.d(LOG_TAG, "Handling authorization request for service provider :" + configManager
-                .getClientId());
-
+        mAuthorizationService
+                .performAuthorizationRequest(request, completionIntent,
+                        cancelIntent, customTabIntent.get());
+        Log.d(LOG_TAG,
+                "Handling authorization request for service provider :"
+                        + mConfigManager.getClientId());
     }
 
     public void handleAuthorization(Intent intent, TokenRequest.TokenRespCallback callback) {
 
         AuthorizationResponse response = AuthorizationResponse.fromIntent(intent);
         mOAuth2TokenResponse = new OAuth2TokenResponse();
-        new TokenRequest(mAuthorizationService, response, callback).execute();
+        new TokenRequest(mAuthorizationService, mOAuth2TokenResponse, response, callback).execute();
         Log.d(LOG_TAG,
                 "Handling token request for service provider :" + mConfigManager.getClientId());
 
     }
 
-    public void logout(Context context, String idToken) {
+    public void logout(Context context) {
 
         StringBuffer url = new StringBuffer();
-        url.append(mConfigManager.getLogoutEndpointUri());
+        url.append(mConfigManager.getLogoutUri());
         url.append("?id_token_hint=");
-        url.append(idToken);
+        url.append(mOAuth2TokenResponse.getIdToken());
         url.append("&post_logout_redirect_uri=");
         url.append(mConfigManager.getRedirectUri());
         Log.d(LOG_TAG,

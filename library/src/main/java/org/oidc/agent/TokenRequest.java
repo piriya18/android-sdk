@@ -34,10 +34,13 @@ public class TokenRequest extends AsyncTask<Void, Void, OAuth2TokenResponse> {
     private AuthorizationResponse mResponse;
     private TokenRespCallback mCallback;
     private static final String LOG_TAG = "TokenRequest";
+    OAuth2TokenResponse oAuth2TokenResponse;
 
-    TokenRequest(AuthorizationService mAuthorizationService, AuthorizationResponse mResponse,
+    TokenRequest(AuthorizationService mAuthorizationService,
+            OAuth2TokenResponse mAuth2TokenResponse, AuthorizationResponse mResponse,
             TokenRespCallback mCallback) {
         this.mAuthorizationService = mAuthorizationService;
+        oAuth2TokenResponse = mAuth2TokenResponse;
         this.mResponse = mResponse;
         this.mCallback = mCallback;
     }
@@ -45,7 +48,6 @@ public class TokenRequest extends AsyncTask<Void, Void, OAuth2TokenResponse> {
     @Override
     protected OAuth2TokenResponse doInBackground(Void... voids) {
 
-        OAuth2TokenResponse oAuth2TokenResponse = new OAuth2TokenResponse();
         mAuthorizationService.performTokenRequest(mResponse.createTokenExchangeRequest(),
                 new AuthorizationService.TokenResponseCallback() {
                     @Override

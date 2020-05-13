@@ -51,10 +51,13 @@ public class ConfigManager {
     private String clientId;
     private String scope;
     private Uri redirectUri;
-    private Uri authEndpointUri;
-    private Uri tokenEndpointUri;
-    private Uri userInfoEndpointUri;
-    private Uri logoutEndpointUri;
+    private Uri logoutUri;
+    private Uri dicoveryUri;
+    private String issuerUri;
+    private static final String DISCOVERY_ENDPOINT = "/oauth2/oidcdiscovery/.well-known/openid-configuration";
+    private static final String OIDC_LOGOUT = "/oidc/logout";
+
+    private static final String ISSUER_URI = "issuer_uri";
 
     private ConfigManager(Context context, int rawid) {
 
@@ -114,36 +117,17 @@ public class ConfigManager {
     }
 
     /**
-     * Returns the authorization endpoint URI specified in the res/raw/config.json file.
-     *
-     * @return Authorization Endpoint URI.
-     */
-    @NonNull
-    public Uri getAuthEndpointUri() {
-
-        return authEndpointUri;
-    }
-
-    /**
-     * Returns the token endpoint URI specified in the res/raw/config.json file.
+     * Returns the dicovery endpoint URI derived from issuer uri specified in the res/raw/config
+     * .json file.
      *
      * @return Token Endpoint URI.
      */
     @NonNull
-    public Uri getTokenEndpointUri() {
+    public Uri getDiscoveryUri() {
 
-        return tokenEndpointUri;
-    }
-
-    /**
-     * Returns the user info endpoint URI specified in the res/raw/config.json file.
-     *
-     * @return User Info Endpoint URI.
-     */
-    @NonNull
-    public Uri getUserInfoEndpointUri() {
-
-        return userInfoEndpointUri;
+        String discoveryEnd = issuerUri + DISCOVERY_ENDPOINT;
+        this.dicoveryUri = getRequiredUri(discoveryEnd);
+        return dicoveryUri;
     }
 
     /**
@@ -152,9 +136,11 @@ public class ConfigManager {
      * @return LogoutRequest Endpoint URI.
      */
     @NonNull
-    public Uri getLogoutEndpointUri() {
+    public Uri getLogoutUri() {
 
-        return logoutEndpointUri;
+        String logoutEnd = issuerUri + OIDC_LOGOUT;
+        this.logoutUri = getRequiredUri(logoutEnd);
+        return this.logoutUri;
     }
 
     /**
@@ -175,11 +161,8 @@ public class ConfigManager {
         }
         clientId = getRequiredConfigString("client_id");
         scope = getRequiredConfigString("authorization_scope");
-        redirectUri = getRequiredConfigUri("redirect_uri");
-        authEndpointUri = getRequiredConfigUri("authorization_endpoint");
-        tokenEndpointUri = getRequiredConfigUri("token_endpoint");
-        userInfoEndpointUri = getRequiredConfigUri("userinfo_endpoint");
-        logoutEndpointUri = getRequiredConfigUri("end_session_endpoint");
+        redirectUri = getRequiredUri(getRequiredConfigString("redirect_uri"));
+        issuerUri = getRequiredConfigString(ISSUER_URI);
     }
 
     /**
@@ -199,31 +182,26 @@ public class ConfigManager {
                 value = null;
             }
         }
-
         if (value == null) {
             Log.e("ConfigManager",
                     propName + " is required but not specified in the configuration");
         }
-
         return value;
     }
 
     /**
-     * Returns the Config URI specified by the property name.
+     * return Config URI.
      *
-     * @param propName Property name.
-     * @return Config URI.
+     * @param uristr
+     * @return Uri
      */
-    @NonNull
-    private Uri getRequiredConfigUri(String propName) {
+    private Uri getRequiredUri(String uristr) {
 
-        String uriStr = getRequiredConfigString(propName);
         Uri uri = null;
-
         try {
-            uri = Uri.parse(uriStr);
+            uri = Uri.parse(uristr);
         } catch (Throwable ex) {
-            Log.e("ConfigManager", propName + "could not be parsed ");
+            Log.e("ConfigManager", uristr + "could not be parsed ");
         }
         return uri;
     }
