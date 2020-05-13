@@ -36,6 +36,7 @@ import java.nio.charset.Charset;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.Okio;
+import org.oidc.agent.library.R;
 
 /**
  * Reads and validates the configuration from res/raw/config.json file.
@@ -43,6 +44,7 @@ import okio.Okio;
 public class ConfigManager {
 
     private static WeakReference<ConfigManager> sInstance = new WeakReference<>(null);
+    private static int rawId;
 
     private final Context context;
     private final Resources resources;
@@ -59,11 +61,11 @@ public class ConfigManager {
 
     private static final String ISSUER_URI = "issuer_uri";
 
-    private ConfigManager(Context context, int rawid) {
+    private ConfigManager(Context context) {
 
         this.context = context;
         resources = context.getResources();
-        readConfiguration(rawid);
+        readConfiguration(R.raw.oidc_config);
     }
 
     /**
@@ -72,11 +74,11 @@ public class ConfigManager {
      * @param context Context object with information about the current state of the application.
      * @return ConfigManager instance.
      */
-    public static ConfigManager getInstance(Context context, int rawid) {
+    public static ConfigManager getInstance(Context context) {
 
         ConfigManager config = sInstance.get();
         if (config == null) {
-            config = new ConfigManager(context, rawid);
+            config = new ConfigManager(context);
             sInstance = new WeakReference<>(config);
         }
 
@@ -205,4 +207,5 @@ public class ConfigManager {
         }
         return uri;
     }
+
 }
