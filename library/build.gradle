@@ -35,9 +35,11 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-    implementation 'net.openid:appauth:0.7.0'
+    implementation 'net.openid:appauth:0.7.1'
     implementation 'com.squareup.okio:okio:1.14.1'
-    implementation group: 'com.google.code.gson', name: 'gson', version: '2.3.1'
+    //implementation group: 'com.google.code.gson', name: 'gson', version: '2.3.1'
+    implementation 'com.googlecode.json-simple:json-simple:1.1'
+
 }
 
 apply from: 'publish.gradle'

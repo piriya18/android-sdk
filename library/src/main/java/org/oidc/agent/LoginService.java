@@ -28,13 +28,24 @@ import androidx.annotation.NonNull;
 import androidx.browser.customtabs.CustomTabsIntent;
 
 import net.openid.appauth.AuthState;
-import net.openid.appauth.AuthorizationException;
 import net.openid.appauth.AuthorizationRequest;
 import net.openid.appauth.AuthorizationResponse;
 import net.openid.appauth.AuthorizationService;
 import net.openid.appauth.AuthorizationServiceConfiguration;
 import net.openid.appauth.ResponseTypeValues;
+import okio.Okio;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.oidc.agent.exception.ClientException;
+import org.oidc.agent.exception.ServerException;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -48,58 +59,126 @@ public class LoginService {
     private OAuth2TokenResponse mOAuth2TokenResponse;
     private AuthorizationService mAuthorizationService;
     private static final String LOG_TAG = "LoginService";
-    private AuthState authState;
-    private static LoginService loginService;
+    private AuthState mAuthState;
+    private static LoginService mLoginService;
+    private OAuthDiscovery mDiscovery;
 
-    private LoginService(Context context) {
+    private LoginService(Context context) throws ClientException {
+
         mContext = context;
         if (mConfigManager == null) {
             mConfigManager = ConfigManager.getInstance(context);
         }
     }
 
-    public static LoginService getInstance(@NonNull Context context) {
-        if (loginService == null) {
-            loginService = new LoginService(context);
+    /**
+     * Returns the login service instance.
+     *
+     * @param context Context
+     * @return LoginService
+     */
+    public static LoginService getInstance(@NonNull Context context) throws ClientException {
+
+        if (mLoginService == null) {
+            mLoginService = new LoginService(context);
         }
-        return loginService;
+        return mLoginService;
     }
 
+    /**
+     * Handles the authorization flow by getting the endpoints from discovery service.
+     *
+     * @param completionIntent
+     * @param cancelIntent
+     */
     public void doAuthorization(PendingIntent completionIntent, PendingIntent cancelIntent) {
 
-        AuthorizationServiceConfiguration.fetchFromUrl(mConfigManager.getDiscoveryUri(), new AuthorizationServiceConfiguration.RetrieveConfigurationCallback() {
-            @Override
-            public void onFetchConfigurationCompleted(AuthorizationServiceConfiguration serviceConfiguration,
-                    AuthorizationException ex) {
-                if (ex != null) {
-                    Log.w(LOG_TAG, "Failed to retrieve configuration for ", ex);
-                } else {
-                    Log.d(LOG_TAG, "configuration retrieved for " + ", proceeding");
-                    doAuthorize(serviceConfiguration, mContext, completionIntent, cancelIntent);
-
-                }
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.submit(() -> {
+            try {
+                mDiscovery = callDiscoveryUri();
+            } catch (ServerException e) {
+                Log.e(LOG_TAG, e.getMessage());
+            } catch (ClientException e) {
+                Log.e(LOG_TAG, e.getMessage());
             }
+            authorizeRequest(completionIntent, cancelIntent);
         });
     }
 
-    private void doAuthorize(AuthorizationServiceConfiguration configuration, Context context,
-            PendingIntent completionIntent, PendingIntent cancelIntent) {
+    /**
+     * Call discovery endpoint of Identity Server.
+     *
+     * @return OAuthDiscovery.
+     * @throws ServerException
+     * @throws ClientException
+     */
+    private OAuthDiscovery callDiscoveryUri() throws ServerException, ClientException {
 
-        authState = new AuthState(configuration);
-        AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(configuration,
-                mConfigManager.getClientId(), ResponseTypeValues.CODE,
-                mConfigManager.getRedirectUri());
-        builder.setScopes(mConfigManager.getScope());
-        AuthorizationRequest request = builder.build();
-        mAuthorizationService = new AuthorizationService(context);
-        CustomTabsIntent.Builder intentBuilder = mAuthorizationService
-                .createCustomTabsIntentBuilder(request.toUri());
-        customTabIntent.set(intentBuilder.build());
-        mAuthorizationService.performAuthorizationRequest(request, completionIntent, cancelIntent,
-                customTabIntent.get());
-        Log.d(LOG_TAG, "Handling authorization request for service provider :" + mConfigManager.getClientId());
+        HttpURLConnection conn;
+        URL userInfoEndpoint;
+
+        try {
+            Log.d(LOG_TAG, "Call discovery service of identity server via: " + mConfigManager
+                    .getDiscoveryUri().toString());
+            userInfoEndpoint = new URL(mConfigManager.getDiscoveryUri().toString());
+            conn = (HttpURLConnection) userInfoEndpoint.openConnection();
+            conn.setRequestMethod(LoginServiceConstants.HTTP_GET);
+            conn.setDoInput(true);
+            String response = Okio.buffer(Okio.source(conn.getInputStream()))
+                    .readString(Charset.forName("UTF-8"));
+            conn.disconnect();
+            if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                throw new ServerException("Server returns" + conn.getResponseCode() + "when "
+                        + "calling discovery endpoint");
+            }
+            JSONObject discoveryResponse = new JSONObject(response);
+            return new OAuthDiscovery(discoveryResponse);
+
+        } catch (MalformedURLException e) {
+            throw new ClientException("Discovery endpoint is malformed. ", e);
+        } catch (IOException e) {
+            throw new ServerException("Error while calling the discovery endpoint. ", e);
+        } catch (JSONException e) {
+            throw new ServerException("Error while parsing the discovery response as JSON. ", e);
+        }
     }
 
+    /**
+     * Call authorization endpoint and authorize the request.
+     *
+     * @param completionIntent completionIntent.
+     * @param cancelIntent     cancelIntent.
+     */
+    private void authorizeRequest(PendingIntent completionIntent, PendingIntent cancelIntent) {
+
+        if (mDiscovery != null) {
+            AuthorizationServiceConfiguration serviceConfiguration = new AuthorizationServiceConfiguration(
+                    mDiscovery.getAuthorizationEndpoint(), mDiscovery.getTokenEndpoint());
+
+            mAuthState = new AuthState(serviceConfiguration);
+            AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(
+                    serviceConfiguration, mConfigManager.getClientId(), ResponseTypeValues.CODE,
+                    mConfigManager.getRedirectUri());
+            builder.setScopes(mConfigManager.getScope());
+            AuthorizationRequest request = builder.build();
+            mAuthorizationService = new AuthorizationService(mContext);
+            CustomTabsIntent.Builder intentBuilder = mAuthorizationService
+                    .createCustomTabsIntentBuilder(request.toUri());
+            customTabIntent.set(intentBuilder.build());
+            mAuthorizationService
+                    .performAuthorizationRequest(request, completionIntent, cancelIntent,
+                            customTabIntent.get());
+            Log.d(LOG_TAG, "Handling authorization request for service provider :" + mConfigManager
+                    .getClientId());
+        }
+    }
+
+    /**
+     * Handle the token request.
+     * @param intent intent.
+     * @param callback callback.
+     */
     public void handleAuthorization(Intent intent, TokenRequest.TokenRespCallback callback) {
 
         AuthorizationResponse response = AuthorizationResponse.fromIntent(intent);
@@ -110,10 +189,14 @@ public class LoginService {
 
     }
 
+    /**
+     * Handles logout request from the client application.
+     * @param context context.
+     */
     public void logout(Context context) {
 
         StringBuffer url = new StringBuffer();
-        url.append(mConfigManager.getLogoutUri());
+        url.append(mDiscovery.getLogoutEndpoint());
         url.append("?id_token_hint=");
         url.append(mOAuth2TokenResponse.getIdToken());
         url.append("&post_logout_redirect_uri=");

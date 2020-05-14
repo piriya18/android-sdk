@@ -36,35 +36,36 @@ import java.nio.charset.Charset;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.Okio;
+import org.oidc.agent.exception.ClientException;
 import org.oidc.agent.library.R;
 
 /**
- * Reads and validates the configuration from res/raw/config.json file.
+ * Reads and validates the configuration from res/raw/oidc_config.json file.
  */
 public class ConfigManager {
 
     private static WeakReference<ConfigManager> sInstance = new WeakReference<>(null);
-    private static int rawId;
 
-    private final Context context;
-    private final Resources resources;
+    private final Context mContext;
+    private final Resources mResources;
 
-    private JSONObject configJson;
-    private String clientId;
-    private String scope;
-    private Uri redirectUri;
-    private Uri logoutUri;
-    private Uri dicoveryUri;
-    private String issuerUri;
+    private JSONObject mConfigJson;
+    private String mClientId;
+    private String mScope;
+    private Uri mRedirectUri;
+    private Uri mDicoveryUri;
+
     private static final String DISCOVERY_ENDPOINT = "/oauth2/oidcdiscovery/.well-known/openid-configuration";
-    private static final String OIDC_LOGOUT = "/oidc/logout";
+    private static final String DISCOVERY_URI = "discovery_uri";
+    private static final String CLIENT_ID = "client_id";
+    private static final String AUTHORIZATION_SCOPE ="authorization_scope";
+    private static final String REDIRECT_URI = "redirect_uri";
+    private static final String LOG_TAG = "ConfigManager";
 
-    private static final String ISSUER_URI = "issuer_uri";
+    private ConfigManager(Context mContext) throws ClientException {
 
-    private ConfigManager(Context context) {
-
-        this.context = context;
-        resources = context.getResources();
+        this.mContext = mContext;
+        mResources = mContext.getResources();
         readConfiguration(R.raw.oidc_config);
     }
 
@@ -74,7 +75,7 @@ public class ConfigManager {
      * @param context Context object with information about the current state of the application.
      * @return ConfigManager instance.
      */
-    public static ConfigManager getInstance(Context context) {
+    public static ConfigManager getInstance(Context context) throws ClientException {
 
         ConfigManager config = sInstance.get();
         if (config == null) {
@@ -93,7 +94,7 @@ public class ConfigManager {
     @NonNull
     public String getClientId() {
 
-        return clientId;
+        return mClientId;
     }
 
     /**
@@ -104,7 +105,7 @@ public class ConfigManager {
     @NonNull
     public String getScope() {
 
-        return scope;
+        return mScope;
     }
 
     /**
@@ -115,11 +116,11 @@ public class ConfigManager {
     @NonNull
     public Uri getRedirectUri() {
 
-        return redirectUri;
+        return mRedirectUri;
     }
 
     /**
-     * Returns the dicovery endpoint URI derived from issuer uri specified in the res/raw/config
+     * Returns the discovery endpoint URI derived from issuer uri specified in the res/raw/config
      * .json file.
      *
      * @return Token Endpoint URI.
@@ -127,44 +128,31 @@ public class ConfigManager {
     @NonNull
     public Uri getDiscoveryUri() {
 
-        String discoveryEnd = issuerUri + DISCOVERY_ENDPOINT;
-        this.dicoveryUri = getRequiredUri(discoveryEnd);
-        return dicoveryUri;
-    }
-
-    /**
-     * Returns the logout endpoint URI specified in the res/raw/config.json file.
-     *
-     * @return LogoutRequest Endpoint URI.
-     */
-    @NonNull
-    public Uri getLogoutUri() {
-
-        String logoutEnd = issuerUri + OIDC_LOGOUT;
-        this.logoutUri = getRequiredUri(logoutEnd);
-        return this.logoutUri;
+        return mDicoveryUri;
     }
 
     /**
      * Reads the configuration values.
      */
-    private void readConfiguration(int rawid) {
+    private void readConfiguration(int rawid) throws ClientException {
 
-        BufferedSource configSource = Okio.buffer(Okio.source(resources.openRawResource(rawid)));
+        BufferedSource configSource = Okio.buffer(Okio.source(mResources.openRawResource(rawid)));
         Buffer configData = new Buffer();
 
         try {
             configSource.readAll(configData);
-            configJson = new JSONObject(configData.readString(Charset.forName("UTF-8")));
+            mConfigJson = new JSONObject(configData.readString(Charset.forName("UTF-8")));
         } catch (IOException ex) {
+            throw new ClientException("Error while reading the config file");
 
         } catch (JSONException ex) {
+            throw new ClientException("Error while parsing the config as json");
 
         }
-        clientId = getRequiredConfigString("client_id");
-        scope = getRequiredConfigString("authorization_scope");
-        redirectUri = getRequiredUri(getRequiredConfigString("redirect_uri"));
-        issuerUri = getRequiredConfigString(ISSUER_URI);
+        mClientId = getRequiredConfigString(CLIENT_ID);
+        mScope = getRequiredConfigString(AUTHORIZATION_SCOPE);
+        mRedirectUri = getRequiredUri(getRequiredConfigString(REDIRECT_URI));
+        mDicoveryUri = deriveDiscoveryUri(getRequiredConfigString(DISCOVERY_URI));
     }
 
     /**
@@ -176,7 +164,7 @@ public class ConfigManager {
     @NonNull
     private String getRequiredConfigString(String propName) {
 
-        String value = configJson.optString(propName);
+        String value = mConfigJson.optString(propName);
 
         if (value != null) {
             value = value.trim();
@@ -185,27 +173,39 @@ public class ConfigManager {
             }
         }
         if (value == null) {
-            Log.e("ConfigManager",
-                    propName + " is required but not specified in the configuration");
+            Log.e(LOG_TAG, propName + " is required but not specified in the configuration");
         }
         return value;
     }
 
     /**
-     * return Config URI.
+     * Returns Config URI.
      *
-     * @param uristr
+     * @param endpoint
      * @return Uri
      */
-    private Uri getRequiredUri(String uristr) {
+    private Uri getRequiredUri(String endpoint) {
 
-        Uri uri = null;
-        try {
-            uri = Uri.parse(uristr);
-        } catch (Throwable ex) {
-            Log.e("ConfigManager", uristr + "could not be parsed ");
-        }
+        Uri uri = Uri.parse(endpoint);
         return uri;
+    }
+
+    /**
+     * Returns discovery URI.
+     *
+     * @param issuerUri Uri.
+     * @return discovery URI.
+     */
+    private Uri deriveDiscoveryUri(String issuerUri) {
+
+        if(issuerUri.contains(DISCOVERY_ENDPOINT)){
+            Log.d(LOG_TAG, "Discovery endpoint is " + issuerUri);
+            return getRequiredUri(issuerUri);
+        }else{
+            String derivedUri = issuerUri+ DISCOVERY_ENDPOINT;
+            Log.d(LOG_TAG, "Discovery endpoint is " + derivedUri);
+            return getRequiredUri(derivedUri);
+        }
     }
 
 }

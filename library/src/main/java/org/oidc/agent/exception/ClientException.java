@@ -18,7 +18,20 @@
 
 package org.oidc.agent.exception;
 
-public class InvalidConfigurationException extends Throwable {
-    public InvalidConfigurationException(String s) {
+import java.net.MalformedURLException;
+
+public class ClientException extends Throwable {
+
+    private String message;
+
+    public ClientException(String msg) {
+
+    }
+
+    public ClientException(String msg, Exception e) {
+    }
+
+    public String getMessage(){
+       return message;
     }
 }
