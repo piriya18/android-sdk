@@ -1,4 +1,4 @@
-package com.example.mylibrary;
+package com.example.agent;
 
 import org.junit.Test;
 
