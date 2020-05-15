@@ -50,7 +50,7 @@ android.defaultConfig.manifestPlaceholders = [
 
 #### Add RedirectActivity
 ```xml
-<activity android:name="org.oidc.agent.RedirectActivity">
+<activity android:name="org.oidc.agent.sso.RedirectActivity">
    <intent-filter>
        <action android:name="android.intent.action.VIEW" />
        <category android:name="android.intent.category.DEFAULT" />
@@ -99,8 +99,8 @@ Example:
     
     import android.content.Context;
     
-    import org.oidc.agent.ConfigManager;
-    import org.oidc.agent.LoginService;
+    import org.oidc.agent.util.ConfigManager;
+    import org.oidc.agent.sso.LoginService;
     
     public class Util {
     

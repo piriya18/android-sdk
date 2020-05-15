@@ -17,9 +17,10 @@
  * under the License.
  */
 
-package org.oidc.agent;
+package org.oidc.agent.util;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.text.TextUtils;
@@ -55,17 +56,21 @@ public class ConfigManager {
     private Uri mRedirectUri;
     private Uri mDicoveryUri;
 
-    private static final String DISCOVERY_ENDPOINT = "/oauth2/oidcdiscovery/.well-known/openid-configuration";
-    private static final String DISCOVERY_URI = "discovery_uri";
-    private static final String CLIENT_ID = "client_id";
-    private static final String AUTHORIZATION_SCOPE ="authorization_scope";
-    private static final String REDIRECT_URI = "redirect_uri";
+
     private static final String LOG_TAG = "ConfigManager";
+    static final String KEY_LAST_HASH = "lastHash";
 
-    private ConfigManager(Context mContext) throws ClientException {
 
-        this.mContext = mContext;
-        mResources = mContext.getResources();
+    private int mConfigHash;
+    private String mConfigurationError;
+    private final SharedPreferences prefs;
+
+
+    private ConfigManager(Context context) throws ClientException {
+
+        this.mContext = context;
+        mResources = context.getResources();
+        prefs = context.getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE);
         readConfiguration(R.raw.oidc_config);
     }
 
@@ -149,10 +154,10 @@ public class ConfigManager {
             throw new ClientException("Error while parsing the config as json");
 
         }
-        mClientId = getRequiredConfigString(CLIENT_ID);
-        mScope = getRequiredConfigString(AUTHORIZATION_SCOPE);
-        mRedirectUri = getRequiredUri(getRequiredConfigString(REDIRECT_URI));
-        mDicoveryUri = deriveDiscoveryUri(getRequiredConfigString(DISCOVERY_URI));
+        mClientId = getRequiredConfigString(Constants.CLIENT_ID);
+        mScope = getRequiredConfigString(Constants.AUTHORIZATION_SCOPE);
+        mRedirectUri = getRequiredUri(getRequiredConfigString(Constants.REDIRECT_URI));
+        mDicoveryUri = deriveDiscoveryUri(getRequiredConfigString(Constants.DISCOVERY_URI));
     }
 
     /**
@@ -184,9 +189,25 @@ public class ConfigManager {
      * @param endpoint
      * @return Uri
      */
-    private Uri getRequiredUri(String endpoint) {
+    private Uri getRequiredUri(String endpoint) throws ClientException {
 
         Uri uri = Uri.parse(endpoint);
+
+        if (!uri.isHierarchical() || !uri.isAbsolute()) {
+            throw new ClientException(endpoint + " must be hierarchical and absolute");
+        }
+
+        if (!TextUtils.isEmpty(uri.getEncodedUserInfo())) {
+            throw new ClientException(endpoint + " must not have user info");
+        }
+
+        if (!TextUtils.isEmpty(uri.getEncodedQuery())) {
+            throw new ClientException(endpoint+ " must not have query parameters");
+        }
+
+        if (!TextUtils.isEmpty(uri.getEncodedFragment())) {
+            throw new ClientException(endpoint+ " must not have a fragment");
+        }
         return uri;
     }
 
@@ -196,16 +217,25 @@ public class ConfigManager {
      * @param issuerUri Uri.
      * @return discovery URI.
      */
-    private Uri deriveDiscoveryUri(String issuerUri) {
+    private Uri deriveDiscoveryUri(String issuerUri) throws ClientException {
 
-        if(issuerUri.contains(DISCOVERY_ENDPOINT)){
+        if(issuerUri.contains(Constants.DISCOVERY_ENDPOINT)){
             Log.d(LOG_TAG, "Discovery endpoint is " + issuerUri);
             return getRequiredUri(issuerUri);
         }else{
-            String derivedUri = issuerUri+ DISCOVERY_ENDPOINT;
+            String derivedUri = issuerUri+ Constants.DISCOVERY_ENDPOINT;
             Log.d(LOG_TAG, "Discovery endpoint is " + derivedUri);
             return getRequiredUri(derivedUri);
         }
     }
 
+    public boolean hasConfigurationChanged() {
+        Integer lastKnownConfigHash = getLastKnownConfigHash();
+        return lastKnownConfigHash == null || mConfigHash != lastKnownConfigHash;
+    }
+
+    private Integer getLastKnownConfigHash() {
+        String hashString = prefs.getString(KEY_LAST_HASH, null);
+        return hashString == null ? null : Integer.valueOf(hashString);
+    }
 }

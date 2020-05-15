@@ -16,22 +16,23 @@
  * under the License.
  */
 
-package org.oidc.agent;
+package org.oidc.agent.sso;
 
 import android.net.Uri;
 import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.oidc.agent.util.Constants;
 
 /**
  * Stores the discovery response.
  */
-public class OAuthDiscovery {
+public class OAuthDiscoveryResponse {
 
     private JSONObject mDiscoveryResponse;
-    static final String LOG_TAG = "OAuthDiscovery";
+    static final String LOG_TAG = "OAuthDiscoveryResponse";
 
-    public OAuthDiscovery(JSONObject discoveryResponse) {
+    public OAuthDiscoveryResponse(JSONObject discoveryResponse) {
         mDiscoveryResponse = discoveryResponse;
     }
 
@@ -42,7 +43,7 @@ public class OAuthDiscovery {
      */
     public Uri getTokenEndpoint() {
         Log.i(LOG_TAG, "Get token endpoint");
-        return getRequiredUri(LoginServiceConstants.TOKEN_ENDPOINT);
+        return getRequiredUri(Constants.TOKEN_ENDPOINT);
     }
 
     /**
@@ -52,7 +53,7 @@ public class OAuthDiscovery {
      */
     public Uri getAuthorizationEndpoint() {
         Log.i(LOG_TAG, "Get authorization endpoint");
-        return getRequiredUri(LoginServiceConstants.AUTHORIZATION_ENDPOINT);
+        return getRequiredUri(Constants.AUTHORIZATION_ENDPOINT);
     }
 
     /**
@@ -62,7 +63,17 @@ public class OAuthDiscovery {
      */
     public Uri getLogoutEndpoint() {
         Log.i(LOG_TAG, "Get Logout endpoint");
-        return getRequiredUri(LoginServiceConstants.LOGOUT_ENDPOINT);
+        return getRequiredUri(Constants.LOGOUT_ENDPOINT);
+    }
+
+    /**
+     * Get Logout Endpoint from discovery object.
+     *
+     * @return Token endpoint
+     */
+    public Uri getUserInfoEndpoint() {
+        Log.i(LOG_TAG, "Get UserInfo endpoint");
+        return getRequiredUri(Constants.USERINFO_ENDPOINT);
     }
 
     /**

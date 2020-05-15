@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.oidc.agent;
+package org.oidc.agent.sso;
 
 import android.app.Activity;
 import android.os.Bundle;

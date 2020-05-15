@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.oidc.agent;
+package org.oidc.agent.sso;
 
 import android.app.PendingIntent;
 import android.content.Context;
@@ -38,6 +38,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.oidc.agent.exception.ClientException;
 import org.oidc.agent.exception.ServerException;
+import org.oidc.agent.util.ConfigManager;
+import org.oidc.agent.util.Constants;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -61,7 +63,7 @@ public class LoginService {
     private static final String LOG_TAG = "LoginService";
     private AuthState mAuthState;
     private static LoginService mLoginService;
-    private OAuthDiscovery mDiscovery;
+    private OAuthDiscoveryResponse mDiscovery;
 
     private LoginService(Context context) throws ClientException {
 
@@ -113,7 +115,7 @@ public class LoginService {
      * @throws ServerException
      * @throws ClientException
      */
-    private OAuthDiscovery callDiscoveryUri() throws ServerException, ClientException {
+    private OAuthDiscoveryResponse callDiscoveryUri() throws ServerException, ClientException {
 
         HttpURLConnection conn;
         URL userInfoEndpoint;
@@ -123,17 +125,19 @@ public class LoginService {
                     .getDiscoveryUri().toString());
             userInfoEndpoint = new URL(mConfigManager.getDiscoveryUri().toString());
             conn = (HttpURLConnection) userInfoEndpoint.openConnection();
-            conn.setRequestMethod(LoginServiceConstants.HTTP_GET);
+            conn.setRequestMethod(Constants.HTTP_GET);
             conn.setDoInput(true);
             String response = Okio.buffer(Okio.source(conn.getInputStream()))
                     .readString(Charset.forName("UTF-8"));
             conn.disconnect();
             if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                Log.e(LOG_TAG, "Server returns" + conn.getResponseCode() + "when "
+                        + "calling discovery endpoint");
                 throw new ServerException("Server returns" + conn.getResponseCode() + "when "
                         + "calling discovery endpoint");
             }
             JSONObject discoveryResponse = new JSONObject(response);
-            return new OAuthDiscovery(discoveryResponse);
+            return new OAuthDiscoveryResponse(discoveryResponse);
 
         } catch (MalformedURLException e) {
             throw new ClientException("Discovery endpoint is malformed. ", e);
@@ -176,7 +180,8 @@ public class LoginService {
 
     /**
      * Handle the token request.
-     * @param intent intent.
+     *
+     * @param intent   intent.
      * @param callback callback.
      */
     public void handleAuthorization(Intent intent, TokenRequest.TokenRespCallback callback) {
@@ -191,6 +196,7 @@ public class LoginService {
 
     /**
      * Handles logout request from the client application.
+     *
      * @param context context.
      */
     public void logout(Context context) {
@@ -215,9 +221,21 @@ public class LoginService {
         return mOAuth2TokenResponse;
     }
 
+    public void getUserInfo(UserInfoRequest.UserInfoResponseCallback callback) {
+
+        Log.i(LOG_TAG, "Call userinfo");
+        new UserInfoRequest(mDiscovery, mOAuth2TokenResponse.getAccessToken(), callback).execute();
+
+    }
+
     public void dispose() {
         if (mAuthorizationService != null) {
             mAuthorizationService.dispose();
         }
+    }
+
+    public boolean isUserLoggedIn() {
+        return mAuthState.isAuthorized() && !mConfigManager.hasConfigurationChanged()
+                && mAuthState.getAuthorizationServiceConfiguration() != null;
     }
 }
