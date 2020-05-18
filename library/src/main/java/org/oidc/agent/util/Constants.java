@@ -35,16 +35,16 @@ public class Constants {
     public static final String AUTHORIZATION_SCOPE = "authorization_scope";
     public static final String REDIRECT_URI = "redirect_uri";
 
-    // Constants related to discovery endpoint.
+    // Constants related to OIDC discovery response.
     public static final String AUTHORIZATION_ENDPOINT = "authorization_endpoint";
     public static final String TOKEN_ENDPOINT = "token_endpoint";
     public static final String LOGOUT_ENDPOINT = "end_session_endpoint";
     public static final String USERINFO_ENDPOINT = "userinfo_endpoint";
 
-    // Constants related to userinfo response.
+    // Constants related to OIDC userinfo response.
     public static final String SUBJECT = "sub";
 
-    // Constants related to logout request.
+    // Constants related to OIDC logout request.
     public static final String ID_TOKEN_HINT = "id_token_hint";
     public static final String POST_LOGOUT_REDIRECT_URI = "post_logout_redirect_uri";
 }
