@@ -29,7 +29,7 @@ public class OAuth2TokenResponse {
     private String idToken;
     private String refreshToken;
 
-    OAuth2TokenResponse() {
+    public OAuth2TokenResponse() {
     }
 
     public void setIdToken(String idToken) {
@@ -71,5 +71,4 @@ public class OAuth2TokenResponse {
     public String getRefreshToken() {
         return refreshToken;
     }
-
 }

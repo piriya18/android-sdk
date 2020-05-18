@@ -39,7 +39,6 @@ public class UserInfoRequest extends AsyncTask<Void, Void, UserInfoResponse> {
     UserInfoRequest(OAuthDiscoveryResponse discovery, String accessToken,
             UserInfoResponseCallback callback) {
 
-        Log.i(LOG_TAG, "Initaite userinfo object");
         this.mDiscovery = discovery;
         this.mCallback = callback;
         this.accessToken = accessToken;
@@ -49,7 +48,7 @@ public class UserInfoRequest extends AsyncTask<Void, Void, UserInfoResponse> {
     protected UserInfoResponse doInBackground(Void... voids) {
 
         UserInfoResponse userInfoResponse = null;
-        Log.i(LOG_TAG, "Making httpconnection object");
+        Log.d(LOG_TAG, "Call userinfo endpoint: " + mDiscovery.getUserInfoEndpoint().toString());
         try {
             URL userInfoEndpoint = new URL(mDiscovery.getUserInfoEndpoint().toString());
             HttpURLConnection conn = (HttpURLConnection) userInfoEndpoint.openConnection();
@@ -68,8 +67,15 @@ public class UserInfoRequest extends AsyncTask<Void, Void, UserInfoResponse> {
         return userInfoResponse;
     }
 
+    /**
+     * Handle the userinfo response callback.
+     */
     public interface UserInfoResponseCallback {
 
+        /**
+         * Handle the flow after userinfo request is completed.
+         * @param userInfoResponse UserInfoResponse
+         */
         void onUserInfoRequestCompleted(UserInfoResponse userInfoResponse);
     }
 }

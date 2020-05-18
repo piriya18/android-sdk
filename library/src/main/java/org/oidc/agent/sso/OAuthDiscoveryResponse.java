@@ -25,7 +25,7 @@ import org.json.JSONObject;
 import org.oidc.agent.util.Constants;
 
 /**
- * Stores the discovery response.
+ * This class stores the discovery response.
  */
 public class OAuthDiscoveryResponse {
 
@@ -33,6 +33,7 @@ public class OAuthDiscoveryResponse {
     static final String LOG_TAG = "OAuthDiscoveryResponse";
 
     public OAuthDiscoveryResponse(JSONObject discoveryResponse) {
+
         mDiscoveryResponse = discoveryResponse;
     }
 
@@ -42,6 +43,7 @@ public class OAuthDiscoveryResponse {
      * @return Token endpoint
      */
     public Uri getTokenEndpoint() {
+
         Log.i(LOG_TAG, "Get token endpoint");
         return getRequiredUri(Constants.TOKEN_ENDPOINT);
     }
@@ -52,6 +54,7 @@ public class OAuthDiscoveryResponse {
      * @return Token endpoint
      */
     public Uri getAuthorizationEndpoint() {
+
         Log.i(LOG_TAG, "Get authorization endpoint");
         return getRequiredUri(Constants.AUTHORIZATION_ENDPOINT);
     }
@@ -62,7 +65,8 @@ public class OAuthDiscoveryResponse {
      * @return Token endpoint
      */
     public Uri getLogoutEndpoint() {
-        Log.i(LOG_TAG, "Get Logout endpoint");
+
+        Log.d(LOG_TAG, "Get Logout endpoint");
         return getRequiredUri(Constants.LOGOUT_ENDPOINT);
     }
 
@@ -72,7 +76,8 @@ public class OAuthDiscoveryResponse {
      * @return Token endpoint
      */
     public Uri getUserInfoEndpoint() {
-        Log.i(LOG_TAG, "Get UserInfo endpoint");
+
+        Log.d(LOG_TAG, "Get UserInfo endpoint");
         return getRequiredUri(Constants.USERINFO_ENDPOINT);
     }
 
@@ -100,12 +105,12 @@ public class OAuthDiscoveryResponse {
      * @return Supported Value for that property from discovery object
      */
     public String getDiscoveryProperty(String property) {
-        Log.i(LOG_TAG, "Call discovery service");
+
         String discoveryProperty = null;
         try {
             discoveryProperty = (String) mDiscoveryResponse.get(property);
         } catch (JSONException e) {
-            e.printStackTrace();
+
         }
         return discoveryProperty;
     }

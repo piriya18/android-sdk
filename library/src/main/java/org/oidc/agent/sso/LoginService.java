@@ -40,12 +40,16 @@ import org.oidc.agent.exception.ClientException;
 import org.oidc.agent.exception.ServerException;
 import org.oidc.agent.util.ConfigManager;
 import org.oidc.agent.util.Constants;
+import org.oidc.agent.util.Util;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
@@ -151,8 +155,8 @@ public class LoginService {
     /**
      * Call authorization endpoint and authorize the request.
      *
-     * @param completionIntent completionIntent.
-     * @param cancelIntent     cancelIntent.
+     * @param completionIntent CompletionIntent.
+     * @param cancelIntent     CancelIntent.
      */
     private void authorizeRequest(PendingIntent completionIntent, PendingIntent cancelIntent) {
 
@@ -201,23 +205,28 @@ public class LoginService {
      */
     public void logout(Context context) {
 
-        StringBuffer url = new StringBuffer();
-        url.append(mDiscovery.getLogoutEndpoint());
-        url.append("?id_token_hint=");
-        url.append(mOAuth2TokenResponse.getIdToken());
-        url.append("&post_logout_redirect_uri=");
-        url.append(mConfigManager.getRedirectUri());
-        Log.d(LOG_TAG,
-                "Handling logout request for service provider :" + mConfigManager.getClientId());
-        CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
-        CustomTabsIntent customTabsIntent = builder.build();
-        customTabsIntent.intent.setFlags(
-                Intent.FLAG_ACTIVITY_NO_HISTORY | Intent.FLAG_ACTIVITY_NEW_TASK
-                        | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        customTabsIntent.launchUrl(context, Uri.parse(url.toString()));
+        Map<String, String> paramMap = new HashMap<>();
+        paramMap.put(Constants.ID_TOKEN_HINT, mOAuth2TokenResponse.getIdToken());
+        paramMap.put(Constants.POST_LOGOUT_REDIRECT_URI,
+                mConfigManager.getRedirectUri().toString());
+        try {
+            String url = Util
+                    .buildURLWithQueryParams(mDiscovery.getLogoutEndpoint().toString(), paramMap);
+            Log.d(LOG_TAG, "Handling logout request for service provider :" + mConfigManager
+                    .getClientId());
+            CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+            CustomTabsIntent customTabsIntent = builder.build();
+            customTabsIntent.intent.setFlags(
+                    Intent.FLAG_ACTIVITY_NO_HISTORY | Intent.FLAG_ACTIVITY_NEW_TASK
+                            | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            customTabsIntent.launchUrl(context, Uri.parse(url));
+        } catch (UnsupportedEncodingException e) {
+            Log.e(LOG_TAG, "Error while creating logout request", e);
+        }
     }
 
     public OAuth2TokenResponse getTokenResponse() {
+
         return mOAuth2TokenResponse;
     }
 
@@ -225,16 +234,25 @@ public class LoginService {
 
         Log.i(LOG_TAG, "Call userinfo");
         new UserInfoRequest(mDiscovery, mOAuth2TokenResponse.getAccessToken(), callback).execute();
-
     }
 
+    /**
+     * Dispose the authorization service.
+     */
     public void dispose() {
+
         if (mAuthorizationService != null) {
             mAuthorizationService.dispose();
         }
     }
 
+    /**
+     * Returns whether the user is logged in or not.
+     *
+     * @return true if the user is logged in, else returns false.
+     */
     public boolean isUserLoggedIn() {
+
         return mAuthState.isAuthorized() && !mConfigManager.hasConfigurationChanged()
                 && mAuthState.getAuthorizationServiceConfiguration() != null;
     }

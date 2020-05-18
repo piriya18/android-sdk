@@ -20,7 +20,7 @@ package org.oidc.agent.util;
 
 public class Constants {
 
-    //Constants related to HTTP connection
+    // Constants related to HTTP connection
     public static final String HTTP_GET = "GET";
     public static final String AUTHORIZATION = "Authorization";
     public static final String BEARER = "Bearer ";
@@ -28,19 +28,23 @@ public class Constants {
     // Constants related to Configuration.
     public static final String PREFS_NAME = "config";
     public static final String KEY_LAST_HASH = "lastHash";
-    public static final String DISCOVERY_ENDPOINT = "/oauth2/oidcdiscovery/.well-known/openid-configuration";
+    public static final String DISCOVERY_ENDPOINT =
+            "/oauth2/oidcdiscovery/.well-known/openid-configuration";
     public static final String DISCOVERY_URI = "discovery_uri";
     public static final String CLIENT_ID = "client_id";
-    public static final String AUTHORIZATION_SCOPE ="authorization_scope";
+    public static final String AUTHORIZATION_SCOPE = "authorization_scope";
     public static final String REDIRECT_URI = "redirect_uri";
 
-    //Constants related to discovery endpoint
+    // Constants related to discovery endpoint.
     public static final String AUTHORIZATION_ENDPOINT = "authorization_endpoint";
     public static final String TOKEN_ENDPOINT = "token_endpoint";
     public static final String LOGOUT_ENDPOINT = "end_session_endpoint";
     public static final String USERINFO_ENDPOINT = "userinfo_endpoint";
 
-    //Constats related to userinfo
+    // Constants related to userinfo response.
     public static final String SUBJECT = "sub";
 
+    // Constants related to logout request.
+    public static final String ID_TOKEN_HINT = "id_token_hint";
+    public static final String POST_LOGOUT_REDIRECT_URI = "post_logout_redirect_uri";
 }

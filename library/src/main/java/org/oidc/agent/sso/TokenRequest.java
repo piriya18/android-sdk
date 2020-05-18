@@ -72,8 +72,16 @@ public class TokenRequest extends AsyncTask<Void, Void, OAuth2TokenResponse> {
         return oAuth2TokenResponse;
     }
 
+    /**
+     * Interface to handle token response.
+     */
     public interface TokenRespCallback {
 
+        /**
+         * Handle the flow after token request is completed.
+         *
+         * @param oAuth2TokenResponse OAuth2TokenResponse.
+         */
         void onTokenRequestCompleted(OAuth2TokenResponse oAuth2TokenResponse);
     }
 }
