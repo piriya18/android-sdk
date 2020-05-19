@@ -30,7 +30,7 @@ publishing {
             if (this.version.endsWith('-SNAPSHOT')) {
                 url "https://192.168.8.100:8081/nexus/content/repositories/snapshots/"
             } else {
-                url "http://192.168.8.100:8081/nexus/content/repositories/releases/"
+                url "http://192.168.8.100:8081/nexus/service/local/staging/deploy/maven2/"
             }
             credentials {
                 username "admin"
