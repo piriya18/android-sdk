@@ -1,7 +1,7 @@
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
-version '0.0.1'
+version '0.0.13'
 group 'org.wso2.carbon.identity.sso'
 
 publishing {
@@ -22,6 +22,19 @@ publishing {
                         dependencyNode.appendNode('version', it.version)
                     }
                 }
+            }
+        }
+    }
+    repositories {
+        maven {
+            if (this.version.endsWith('-SNAPSHOT')) {
+                url "https://192.168.8.100:8081/nexus/content/repositories/snapshots/"
+            } else {
+                url "http://192.168.8.100:8081/nexus/content/repositories/releases/"
+            }
+            credentials {
+                username "admin"
+                password "admin123"
             }
         }
     }
