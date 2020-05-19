@@ -41,5 +41,18 @@ dependencies {
 
 }
 
-apply from: 'publish.gradle'
+//apply from: 'publish.gradle'
+
+apply plugin: 'maven'
+
+uploadArchives {
+    repositories.mavenDeployer {
+            repository(url: "http://192.168.8.100:8081/nexus/content/repositories/releases/") {
+                authentication(userName: "admin", password: "admin123")
+                pom.groupId = "org.wso2.carbon.identity.sso"
+                pom.artifactId =  "wso2is-oidc-sdk"
+                pom.version = '0.0.2'
+            }
+        }
+}
 
