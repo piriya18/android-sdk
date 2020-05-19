@@ -51,7 +51,7 @@ uploadArchives {
                 authentication(userName: "admin", password: "admin123")
                 pom.groupId = "org.wso2.carbon.identity.sso"
                 pom.artifactId =  "wso2is-oidc-sdk"
-                pom.version = '0.0.2'
+                pom.version = '0.0.3'
             }
         }
 }
