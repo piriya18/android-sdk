@@ -30,7 +30,7 @@ publishing {
             if (this.version.endsWith('-SNAPSHOT')) {
                 url "https://192.168.8.100:8081/nexus/content/repositories/snapshots/"
             } else {
-                url "http://192.168.8.100:8081/nexus/content/repositories/releases/"
+                url "http://localhost:8081/nexus/content/repositories/releases/"
             }
             credentials {
                 username "admin"
