@@ -8,9 +8,9 @@ publishing {
     publications {
         Production(MavenPublication) {
             artifact("$buildDir/outputs/aar/library-release.aar")
-            groupId this.group
             artifactId 'wso2is-oidc-sdk'
-            version this.version
+            groupId project.group
+            version project.version
 
             pom.withXml {
                 def dependenciesNode = asNode().appendNode('dependencies')
