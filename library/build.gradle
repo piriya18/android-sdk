@@ -1,5 +1,8 @@
 apply plugin: 'com.android.library'
 
+version = '1.0.19'
+group = 'org.wso2.carbon.identity.sso'
+
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
@@ -43,16 +46,13 @@ dependencies {
 
 apply from: 'publish.gradle'
 
-//apply plugin: 'maven'
+task incrementVersion {
 
-//uploadArchives {
-   // repositories.mavenDeployer {
-     //       repository(url: "http://192.168.8.100:8081/nexus/content/repositories/releases/") {
-       //         authentication(userName: "admin", password: "admin123")
-        //        pom.groupId = "org.wso2.carbon.identity.sso"
-        //        pom.artifactId =  "wso2is-oidc-sdk"
-          //      pom.version = '0.0.3'
-           // }
-       // }
-//}
+    if(project.hasProperty('newVersion')) {
+        println 'Set Project to new Version ' + newVersion
+        String s = buildFile.getText().replaceFirst("version = '$version'", "version = '" +
+                newVersion + "'")
+        buildFile.setText(s)
+    }
+}
 
