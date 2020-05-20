@@ -1,6 +1,6 @@
 apply plugin: 'com.android.library'
 
-version = '1.0.19'
+version = '1.0.18'
 group = 'org.wso2.carbon.identity.sso'
 
 android {
